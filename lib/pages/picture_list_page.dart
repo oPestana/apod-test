@@ -55,7 +55,8 @@ class _PictureListPageState extends State<PictureListPage> {
 
   Future<List> fetchFromApi() async {
     const key = '6MZbidRebIh1HtWdJOAbwDAIbcQrwGnXh3f4Ahoq';
-    final url = Uri.parse('https://api.nasa.gov/planetary/apod?count=5&api_key=$key');
+    final url =
+        Uri.parse('https://api.nasa.gov/planetary/apod?count=5&api_key=$key');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -100,45 +101,56 @@ class _PictureListPageState extends State<PictureListPage> {
           Expanded(
             child: _data.isEmpty
                 ? Container(
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-              ),
-            )
-                : ListView.builder(
-              itemCount: _filteredData.length,
-              itemBuilder: (BuildContext context, int index) {
-                final item = _filteredData[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailsPicture(
-                          picture: item,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Card(
-                    color: Colors.grey,
-                    child: Column(
-                      children: [
-                        Image.network(item['url'], fit: BoxFit.cover),
-                        Text(
-                          item['title'],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        Text(
-                          item['date'],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ],
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
                     ),
+                  )
+                : ListView.builder(
+                    itemCount: _filteredData.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final item = _filteredData[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailsPicture(
+                                picture: item,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          color: Colors.grey,
+                          child: Column(
+                            children: [
+                              Image.network(
+                                item['url'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, trace) {
+                                  return Container(
+                                    color: Colors.grey,
+                                    child: const Icon(
+                                      Icons.broken_image
+                                    ),
+                                  );
+                                },
+                              ),
+                              Text(
+                                item['title'],
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              Text(
+                                item['date'],
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
