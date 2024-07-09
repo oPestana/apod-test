@@ -54,7 +54,7 @@ class _PictureListPageState extends State<PictureListPage> {
   }
 
   Future<List> fetchFromApi() async {
-    const key = '6MZbidRebIh1HtWdJOAbwDAIbcQrwGnXh3f4Ahoq';
+    const key = 'DEMO_KEY';
     final url =
         Uri.parse('https://api.nasa.gov/planetary/apod?count=5&api_key=$key');
     final response = await http.get(url);
@@ -131,9 +131,7 @@ class _PictureListPageState extends State<PictureListPage> {
                                 errorBuilder: (context, error, trace) {
                                   return Container(
                                     color: Colors.grey,
-                                    child: const Icon(
-                                      Icons.broken_image
-                                    ),
+                                    child: const Icon(Icons.broken_image),
                                   );
                                 },
                               ),
