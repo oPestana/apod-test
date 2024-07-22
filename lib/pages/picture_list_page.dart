@@ -1,82 +1,12 @@
-import 'dart:async';
-import 'dart:convert';
-
+// pages/picture_list_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/picture_cubit.dart';
+import '../widgets/picture_list_item.dart';
+import '../cubit/picture_state.dart';
 
-import 'details_picture_page.dart';
-
-class PictureListPage extends StatefulWidget {
-  const PictureListPage({super.key});
-
-  @override
-  State<PictureListPage> createState() => _PictureListPageState();
-}
-
-class _PictureListPageState extends State<PictureListPage> {
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+class PictureListPage extends StatelessWidget {
   final TextEditingController _searchController = TextEditingController();
-  List _data = [];
-  List _filteredData = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(_filterData);
-    getData();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _filterData() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredData = _data.where((item) {
-        final title = item['title'].toLowerCase();
-        return title.contains(query);
-      }).toList();
-    });
-  }
-
-  Future<void> getData() async {
-    try {
-      _data = await fetchFromApi();
-      await saveData(_data);
-    } catch (e) {
-      _data = await readData();
-    }
-    _filterData(); // Apply filter after fetching data
-  }
-
-  Future<List> fetchFromApi() async {
-    const key = 'DEMO_KEY';
-    final url =
-        Uri.parse('https://api.nasa.gov/planetary/apod?count=5&api_key=$key');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Erro ao carregar dados');
-    }
-  }
-
-  Future<void> saveData(List data) async {
-    await _secureStorage.write(key: 'apodData', value: json.encode(data));
-  }
-
-  Future<List> readData() async {
-    final String? data = await _secureStorage.read(key: 'apodData');
-    if (data != null) {
-      return json.decode(data);
-    } else {
-      throw Exception('Opa! Não existem dados.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,58 +27,44 @@ class _PictureListPageState extends State<PictureListPage> {
               labelStyle: TextStyle(color: Colors.white),
             ),
             style: const TextStyle(color: Colors.white),
+            onChanged: (value) {
+              context.read<PictureCubit>().filterPictures(value);
+            },
           ),
           Expanded(
-            child: _data.isEmpty
-                ? Container(
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(
+            child: BlocBuilder<PictureCubit, PictureState>(
+              builder: (context, state) {
+                if (state is LoadingPictureState) {
+                  return const Center(
+                    child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation(Colors.white),
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: _filteredData.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final item = _filteredData[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailsPicture(
-                                picture: item,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          color: Colors.grey,
-                          child: Column(
-                            children: [
-                              Image.network(
-                                item['url'],
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, trace) {
-                                  return Container(
-                                    color: Colors.grey,
-                                    child: const Icon(Icons.broken_image),
-                                  );
-                                },
-                              ),
-                              Text(
-                                item['title'],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                item['date'],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                  );
+                } else if (state is LoadedPictureState) {
+                  return ListView.builder(
+                    itemCount: state.filteredPictures.length,
+                    itemBuilder: (context, index) {
+                      final picture = state.filteredPictures[index];
+                      return PictureListItem(picture: picture);
                     },
-                  ),
+                  );
+                } else if (state is ErrorPictureState) {
+                  return Center(
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                } else {
+                  return const Center(
+                    child: Text(
+                      'Erro desconhecido',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),
