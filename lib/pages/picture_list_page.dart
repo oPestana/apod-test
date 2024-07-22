@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/constants.dart';
 import 'details_picture_page.dart';
 
 class PictureListPage extends StatefulWidget {
@@ -54,9 +55,7 @@ class _PictureListPageState extends State<PictureListPage> {
   }
 
   Future<List> fetchFromApi() async {
-    const key = 'DEMO_KEY';
-    final url =
-        Uri.parse('https://api.nasa.gov/planetary/apod?count=5&api_key=$key');
+    final url = Uri.parse(nasaApiUrl);
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return json.decode(response.body);
